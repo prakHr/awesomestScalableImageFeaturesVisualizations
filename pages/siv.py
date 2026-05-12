@@ -13,6 +13,7 @@ import io as pyio
 from neurova import io, transform, core, datasets
 
 import numpy as np
+import img2sktch as i2s
 
 dash.register_page(
     __name__,
@@ -39,6 +40,27 @@ layout = dmc.MantineProvider(
                 label="Image Path",
                 w=400
             ),
+
+            dmc.Space(h=20),
+
+            dmc.TextInput(
+                id='input-sketch-text',
+                placeholder='Enter blur value',
+                label="Blur value",
+                w=400
+            ),
+            
+            dmc.Space(h=20),
+
+            dmc.Button(
+                "Click To See Beautiful Sketch Image",
+                id='submit-sketch-button',
+                n_clicks=0
+            ),
+
+            dmc.Space(h=30),
+
+            html.Div(id='output-sketch-message'),
 
             dmc.Space(h=20),
 
@@ -146,6 +168,74 @@ layout = dmc.MantineProvider(
     )
 
 )
+
+@callback(
+    Output('output-sketch-message', 'children'),
+    Input('submit-sketch-button', 'n_clicks'),
+    State('input-text', 'value'),
+    State('input-sketch-text', 'value')
+)
+def display_grayscale_image(n_clicks, input_value, input_blur_value):
+
+    if n_clicks > 0 and input_value and input_blur_value:
+
+        try:
+
+            # Read image
+            image = i2s.from_file(input_value)
+
+            arr = i2s.PencilSketch(blur_sigma=int(input_blur_value))(image)
+
+            # Create figure
+            fig, ax = plt.subplots()
+
+            ax.imshow(arr, cmap='gray')
+            ax.axis('off')
+
+            # Save to memory
+            buf = pyio.BytesIO()
+
+            plt.savefig(
+                buf,
+                format='png',
+                bbox_inches='tight',
+                pad_inches=0
+            )
+
+            buf.seek(0)
+
+            # Convert image to base64
+            img_base64 = base64.b64encode(
+                buf.read()
+            ).decode('utf-8')
+
+            plt.close(fig)
+
+            return dmc.Paper(
+
+                [
+                    dmc.Image(
+                        src=f'data:image/png;base64,{img_base64}',
+                        w=400,
+                        radius="md"
+                    )
+                ],
+
+                shadow="sm",
+                radius="md",
+                p="md",
+                withBorder=True
+            )
+        except Exception as e:
+
+            return dmc.Alert(
+                f"Error: {str(e)}",
+                color="red",
+                title="Image Loading Failed"
+            )
+
+    return ""
+
 
 @callback(
     Output('output-message', 'children'),

@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, Input, Output
 import dash_mantine_components as dmc
 import dash
 import multiprocessing
@@ -14,6 +14,9 @@ app.layout = dmc.MantineProvider(
     dmc.Container(
 
         [
+
+            # URL tracker
+            dcc.Location(id="url", refresh=True),
 
             dmc.Title(
                 "Neurova Image Processing App",
@@ -42,7 +45,17 @@ app.layout = dmc.MantineProvider(
 )
 
 
-import multiprocessing
+# Redirect root URL "/" to "/siv"
+@app.callback(
+    Output("url", "pathname"),
+    Input("url", "pathname"),
+    prevent_initial_call=False
+)
+def redirect_home(pathname):
+    if pathname == "/":
+        return "/siv"
+    return pathname
+
 
 if __name__ == "__main__":
 
