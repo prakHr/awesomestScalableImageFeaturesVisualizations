@@ -12,18 +12,21 @@ import dash_mantine_components as dmc
 
 import neurova as nv
 
-import base64
-import matplotlib.pyplot as plt
-import io as pyio
-
 from neurova import (
     io,
     transform,
-    core,
-    datasets
+    core
 )
 
+import pandas as pd
 import numpy as np
+
+import multiprocessing as mp
+from multiprocessing import Pool
+
+import matplotlib.pyplot as plt
+import base64
+import io as pyio
 import os
 
 
@@ -67,6 +70,7 @@ def convert_array_to_base64_miv(arr_miv):
     fig_miv, ax_miv = plt.subplots()
 
     ax_miv.imshow(arr_miv)
+
     ax_miv.axis("off")
 
     buf_miv = pyio.BytesIO()
@@ -92,6 +96,185 @@ def convert_array_to_base64_miv(arr_miv):
     )
 
 
+def process_image_miv(args_miv):
+
+    row_miv = args_miv[0]
+
+    operation_miv = args_miv[1]
+
+    width_miv = args_miv[2]
+
+    height_miv = args_miv[3]
+
+    angle_miv = args_miv[4]
+
+    file_miv = row_miv["filepath"]
+
+    filename_miv = row_miv["filename"]
+
+    rgb_image_miv = io.imread(
+        file_miv
+    )
+
+    output_rows_miv = []
+
+    if operation_miv == "grayscale":
+
+        arr_miv = core.to_grayscale(
+            rgb_image_miv
+        )
+
+        output_rows_miv.append({
+
+            "filename": filename_miv,
+
+            "operation": "Grayscale",
+
+            "image": convert_array_to_base64_miv(
+                arr_miv
+            )
+        })
+
+    elif operation_miv == "hsv":
+
+        arr_miv = core.convert_color_space(
+
+            rgb_image_miv,
+
+            core.ColorSpace.HSV,
+
+            from_space=core.ColorSpace.RGB
+        )
+
+        output_rows_miv.append({
+
+            "filename": filename_miv,
+
+            "operation": "HSV",
+
+            "image": convert_array_to_base64_miv(
+                arr_miv
+            )
+        })
+
+    elif operation_miv == "rgb":
+
+        output_rows_miv.append({
+
+            "filename": filename_miv,
+
+            "operation": "RGB",
+
+            "image": convert_array_to_base64_miv(
+                rgb_image_miv
+            )
+        })
+
+    elif operation_miv == "resize":
+
+        arr_miv = transform.resize(
+
+            rgb_image_miv,
+
+            (
+                int(width_miv),
+                int(height_miv)
+            )
+        )
+
+        output_rows_miv.append({
+
+            "filename": filename_miv,
+
+            "operation": (
+                f"Resize "
+                f"{width_miv}x{height_miv}"
+            ),
+
+            "image": convert_array_to_base64_miv(
+                arr_miv
+            )
+        })
+
+    elif operation_miv == "rotate":
+
+        arr_miv = transform.rotate(
+
+            rgb_image_miv,
+
+            int(angle_miv)
+        )
+
+        output_rows_miv.append({
+
+            "filename": filename_miv,
+
+            "operation": (
+                f"Rotate "
+                f"{angle_miv}°"
+            ),
+
+            "image": convert_array_to_base64_miv(
+                arr_miv
+            )
+        })
+
+    elif operation_miv == "flip":
+
+        flipped_h_miv = np.flip(
+            rgb_image_miv,
+            axis=1
+        )
+
+        flipped_v_miv = np.flip(
+            rgb_image_miv,
+            axis=0
+        )
+
+        flipped_both_miv = np.flip(
+            flipped_v_miv,
+            axis=1
+        )
+
+        output_rows_miv.extend([
+
+            {
+
+                "filename": filename_miv,
+
+                "operation": "Horizontal Flip",
+
+                "image": convert_array_to_base64_miv(
+                    flipped_h_miv
+                )
+            },
+
+            {
+
+                "filename": filename_miv,
+
+                "operation": "Vertical Flip",
+
+                "image": convert_array_to_base64_miv(
+                    flipped_v_miv
+                )
+            },
+
+            {
+
+                "filename": filename_miv,
+
+                "operation": "Both Axes Flip",
+
+                "image": convert_array_to_base64_miv(
+                    flipped_both_miv
+                )
+            }
+        ])
+
+    return output_rows_miv
+
+
 def create_grid_data_miv(
     image_files_miv,
     operation_miv,
@@ -100,179 +283,57 @@ def create_grid_data_miv(
     angle_miv=None
 ):
 
-    row_data_miv = []
+    df_miv = pd.DataFrame({
 
-    for file_miv in image_files_miv:
+        "filepath": image_files_miv,
 
-        rgb_image_miv = io.imread(
-            file_miv
+        "filename": [
+
+            os.path.basename(
+                file_miv
+            )
+
+            for file_miv in image_files_miv
+        ]
+    })
+
+    args_list_miv = [
+
+        (
+            row_miv,
+            operation_miv,
+            width_miv,
+            height_miv,
+            angle_miv
         )
 
-        filename_miv = os.path.basename(
-            file_miv
+        for _, row_miv in df_miv.iterrows()
+    ]
+
+    num_cores_miv = max(
+        1,
+        mp.cpu_count() - 1
+    )
+
+    with Pool(num_cores_miv) as pool_miv:
+
+        results_miv = pool_miv.map(
+
+            process_image_miv,
+
+            args_list_miv
         )
 
-        if operation_miv == "grayscale":
+    flattened_results_miv = [
 
-            arr_miv = core.to_grayscale(
-                rgb_image_miv
-            )
+        item_miv
 
-            row_data_miv.append({
+        for sublist_miv in results_miv
 
-                "filename": filename_miv,
+        for item_miv in sublist_miv
+    ]
 
-                "operation": "Grayscale",
-
-                "image": convert_array_to_base64_miv(
-                    arr_miv
-                )
-            })
-
-        elif operation_miv == "hsv":
-
-            arr_miv = core.convert_color_space(
-
-                rgb_image_miv,
-
-                core.ColorSpace.HSV,
-
-                from_space=core.ColorSpace.RGB
-            )
-
-            row_data_miv.append({
-
-                "filename": filename_miv,
-
-                "operation": "HSV",
-
-                "image": convert_array_to_base64_miv(
-                    arr_miv
-                )
-            })
-
-        elif operation_miv == "rgb":
-
-            row_data_miv.append({
-
-                "filename": filename_miv,
-
-                "operation": "RGB",
-
-                "image": convert_array_to_base64_miv(
-                    rgb_image_miv
-                )
-            })
-
-        elif operation_miv == "resize":
-
-            arr_miv = transform.resize(
-
-                rgb_image_miv,
-
-                (
-                    int(width_miv),
-                    int(height_miv)
-                )
-            )
-
-            row_data_miv.append({
-
-                "filename": filename_miv,
-
-                "operation": (
-                    f"Resize "
-                    f"{width_miv}x{height_miv}"
-                ),
-
-                "image": convert_array_to_base64_miv(
-                    arr_miv
-                )
-            })
-
-        elif operation_miv == "rotate":
-
-            arr_miv = transform.rotate(
-
-                rgb_image_miv,
-
-                int(angle_miv)
-            )
-
-            row_data_miv.append({
-
-                "filename": filename_miv,
-
-                "operation": (
-                    f"Rotate "
-                    f"{angle_miv}°"
-                ),
-
-                "image": convert_array_to_base64_miv(
-                    arr_miv
-                )
-            })
-
-        elif operation_miv == "flip":
-
-            flipped_h_miv = np.flip(
-                rgb_image_miv,
-                axis=1
-            )
-
-            flipped_v_miv = np.flip(
-                rgb_image_miv,
-                axis=0
-            )
-
-            flipped_both_miv = np.flip(
-                flipped_v_miv,
-                axis=1
-            )
-
-            row_data_miv.extend([
-
-                {
-
-                    "filename": filename_miv,
-
-                    "operation": (
-                        "Horizontal Flip"
-                    ),
-
-                    "image": convert_array_to_base64_miv(
-                        flipped_h_miv
-                    )
-                },
-
-                {
-
-                    "filename": filename_miv,
-
-                    "operation": (
-                        "Vertical Flip"
-                    ),
-
-                    "image": convert_array_to_base64_miv(
-                        flipped_v_miv
-                    )
-                },
-
-                {
-
-                    "filename": filename_miv,
-
-                    "operation": (
-                        "Both Axes Flip"
-                    ),
-
-                    "image": convert_array_to_base64_miv(
-                        flipped_both_miv
-                    )
-                }
-            ])
-
-    return row_data_miv
+    return flattened_results_miv
 
 
 column_defs_miv = [
@@ -329,7 +390,7 @@ layout = dmc.MantineProvider(
         [
 
             dmc.Title(
-                "Dash AG Grid Image Viewer",
+                "Multiprocessing Image Viewer",
                 order=2,
                 mb="md"
             ),
@@ -349,85 +410,24 @@ layout = dmc.MantineProvider(
 
                     dmc.Button(
                         "Show Grayscale Images",
-                        id="submit-button-miv",
-                        n_clicks=0
+                        id="submit-button-miv"
                     ),
 
                     dmc.Button(
                         "Show HSV Images",
-                        id="submit-button2-miv",
-                        n_clicks=0
+                        id="submit-button2-miv"
                     ),
 
                     dmc.Button(
                         "Show RGB Images",
-                        id="submit-button3-miv",
-                        n_clicks=0
+                        id="submit-button3-miv"
                     ),
 
                     dmc.Button(
                         "Show Flipped Images",
-                        id="submit-button6-miv",
-                        n_clicks=0
+                        id="submit-button6-miv"
                     )
-
                 ]
-
-            ),
-
-            dmc.Space(h=20),
-
-            dmc.Group(
-
-                [
-
-                    dmc.TextInput(
-                        id="input-resize-h-text-miv",
-                        placeholder="Enter height",
-                        label="Resize Height",
-                        w=200
-                    ),
-
-                    dmc.TextInput(
-                        id="input-resize-w-text-miv",
-                        placeholder="Enter width",
-                        label="Resize Width",
-                        w=200
-                    ),
-
-                    dmc.Button(
-                        "Show Resized Images",
-                        id="submit-button4-miv",
-                        n_clicks=0,
-                        mt=25
-                    )
-
-                ]
-
-            ),
-
-            dmc.Space(h=20),
-
-            dmc.Group(
-
-                [
-
-                    dmc.TextInput(
-                        id="input-rotation-text-miv",
-                        placeholder="Enter rotation angle",
-                        label="Rotation Angle",
-                        w=200
-                    ),
-
-                    dmc.Button(
-                        "Show Rotated Images",
-                        id="submit-button5-miv",
-                        n_clicks=0,
-                        mt=25
-                    )
-
-                ]
-
             ),
 
             dmc.Space(h=30),
@@ -439,11 +439,6 @@ layout = dmc.MantineProvider(
                 columnDefs=column_defs_miv,
 
                 rowData=[],
-
-                defaultColDef={
-
-                    "wrapText": True
-                },
 
                 dashGridOptions={
 
@@ -457,6 +452,7 @@ layout = dmc.MantineProvider(
                 style={
 
                     "height": "900px",
+
                     "width": "100%"
                 },
 
@@ -464,18 +460,16 @@ layout = dmc.MantineProvider(
 
                 dangerously_allow_code=True
             )
-
         ],
 
         size="xl",
         pt=40
-
     )
-
 )
 
 
 @callback(
+
     Output(
         "image-grid-miv",
         "rowData"
@@ -497,37 +491,12 @@ layout = dmc.MantineProvider(
     ),
 
     Input(
-        "submit-button4-miv",
-        "n_clicks"
-    ),
-
-    Input(
-        "submit-button5-miv",
-        "n_clicks"
-    ),
-
-    Input(
         "submit-button6-miv",
         "n_clicks"
     ),
 
     State(
         "input-folder-path-miv",
-        "value"
-    ),
-
-    State(
-        "input-resize-w-text-miv",
-        "value"
-    ),
-
-    State(
-        "input-resize-h-text-miv",
-        "value"
-    ),
-
-    State(
-        "input-rotation-text-miv",
         "value"
     ),
 
@@ -541,19 +510,9 @@ def update_grid_miv(
 
     rgb_clicks_miv,
 
-    resize_clicks_miv,
-
-    rotate_clicks_miv,
-
     flip_clicks_miv,
 
-    folder_path_miv,
-
-    width_miv,
-
-    height_miv,
-
-    angle_miv
+    folder_path_miv
 ):
 
     ctx_miv = dash.callback_context
@@ -563,7 +522,9 @@ def update_grid_miv(
         return []
 
     button_id_miv = (
+
         ctx_miv.triggered[0]["prop_id"]
+
         .split(".")[0]
     )
 
@@ -577,65 +538,27 @@ def update_grid_miv(
             folder_path_miv
         )
 
-        if button_id_miv == "submit-button-miv":
+        operation_map_miv = {
 
-            return create_grid_data_miv(
+            "submit-button-miv": "grayscale",
 
-                image_files_miv,
+            "submit-button2-miv": "hsv",
 
-                "grayscale"
-            )
+            "submit-button3-miv": "rgb",
 
-        elif button_id_miv == "submit-button2-miv":
+            "submit-button6-miv": "flip"
+        }
 
-            return create_grid_data_miv(
+        operation_miv = operation_map_miv.get(
+            button_id_miv
+        )
 
-                image_files_miv,
+        return create_grid_data_miv(
 
-                "hsv"
-            )
+            image_files_miv,
 
-        elif button_id_miv == "submit-button3-miv":
-
-            return create_grid_data_miv(
-
-                image_files_miv,
-
-                "rgb"
-            )
-
-        elif button_id_miv == "submit-button4-miv":
-
-            return create_grid_data_miv(
-
-                image_files_miv,
-
-                "resize",
-
-                width_miv=width_miv,
-
-                height_miv=height_miv
-            )
-
-        elif button_id_miv == "submit-button5-miv":
-
-            return create_grid_data_miv(
-
-                image_files_miv,
-
-                "rotate",
-
-                angle_miv=angle_miv
-            )
-
-        elif button_id_miv == "submit-button6-miv":
-
-            return create_grid_data_miv(
-
-                image_files_miv,
-
-                "flip"
-            )
+            operation_miv
+        )
 
     except Exception as e_miv:
 
@@ -649,10 +572,7 @@ def update_grid_miv(
 
                 "image": str(e_miv)
             }
-
         ]
-
-    return []
 
 
 dash.clientside_callback(
@@ -660,9 +580,11 @@ dash.clientside_callback(
     """
     function(rowData) {
 
-        window.dashAgGridComponentFunctions = window.dashAgGridComponentFunctions || {};
+        window.dashAgGridComponentFunctions =
+        window.dashAgGridComponentFunctions || {};
 
-        window.dashAgGridComponentFunctions.ImageRenderer = function(props) {
+        window.dashAgGridComponentFunctions.ImageRenderer =
+        function(props) {
 
             return React.createElement(
 
