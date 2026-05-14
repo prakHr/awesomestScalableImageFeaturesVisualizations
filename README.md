@@ -1,16 +1,16 @@
 # Screen 1 - Charlotte Alinlin - Big Mom - Her dream is go to Paris
 ![Alt text](Demo5.png)
 
-# Screen 1
+# Screen 2 - Single Image Visualizations
 ![Alt text](Demo1.png)
 
-# Screen 1
+# Screen 3 - Generate Single Image Features
 ![Alt text](Demo2.png)
 
-# Screen 3
+# Screen 4 - Multiple Image Visualizations
 ![Alt text](Demo3.png)
 
-# Screen 4
+# Screen 5 - Generate Multiple Image Features
 ![Alt text](Demo4.png)
 
 
