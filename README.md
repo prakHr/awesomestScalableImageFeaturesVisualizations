@@ -16,4 +16,4 @@
 
 
 # imageFeaturesVisualization
-contains visualization for image features
+contains most awesome scalable visualizations for image features
