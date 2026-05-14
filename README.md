@@ -1,4 +1,4 @@
-# Screen 1 - Charlotte Alinlin - Big Mom - Her dream is go to Paris
+# Screen 1 - Charlotte Alinlin - Her dream is go to Paris
 ![Alt text](Demo5.png)
 
 # Screen 2 - Single Image Visualizations
