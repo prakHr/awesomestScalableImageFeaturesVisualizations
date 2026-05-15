@@ -13,6 +13,7 @@
 # Screen 5 - Generate Multiple Image Features
 ![Alt text](Demo4.png)
 
+![Alt text](Demo6.png)
 
 
 # imageFeaturesVisualization
