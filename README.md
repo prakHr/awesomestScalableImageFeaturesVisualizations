@@ -1,4 +1,4 @@
-# Screen 1 - Charlotte Alinlin - Her dream is to go to Paris
+# Screen 1 - Charlotte Alinlin - Real Life Character of One Piece
 ![Alt text](Demo5.png)
 
 # Screen 2 - Single Image Visualizations
