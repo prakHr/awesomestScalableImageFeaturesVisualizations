@@ -1,3 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
+
+import matplotlib
+matplotlib.use('Agg')   
 from dash import Dash, html, dcc, Input, Output
 import dash_mantine_components as dmc
 import dash
@@ -31,6 +36,7 @@ app.layout = dmc.MantineProvider(
                     dmc.Anchor("generate_single_image_features", href="/gif"),
                     dmc.Anchor("multiple_image_visualizations", href="/miv"),
                     dmc.Anchor("generate_multiple_image_features", href="/gmf"),
+                    dmc.Anchor("multiple_text_search", href="/mts"),
                 ],
 
                 mb="xl"
