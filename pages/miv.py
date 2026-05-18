@@ -1,3 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
+
+import matplotlib
+matplotlib.use('Agg')   
 from dash import (
     html,
     Input,

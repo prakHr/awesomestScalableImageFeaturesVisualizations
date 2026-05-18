@@ -1,3 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
+
+import matplotlib
+matplotlib.use('Agg')   
 from dash import html, Input, Output, State, callback
 import dash
 
@@ -7,6 +12,7 @@ import dash_mantine_components as dmc
 import neurova as nv
 
 import base64
+
 import matplotlib.pyplot as plt
 import io as pyio
 
