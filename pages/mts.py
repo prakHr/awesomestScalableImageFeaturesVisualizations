@@ -373,7 +373,7 @@ def update_file_path_mts(
         # print("Indexing complete")
         # print("=" * 60)
 
-        answer = rag(query)
+        answer = rag(query) 
 
         return [
 
@@ -391,7 +391,7 @@ def update_file_path_mts(
             dmc.Space(h=10),
 
             dmc.Text(
-                str(answer)
+                str(answer) + str("...")
             )
         ]
 
