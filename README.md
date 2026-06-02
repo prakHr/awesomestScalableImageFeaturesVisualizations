@@ -1,9 +1,6 @@
 # Special Screen - Single Source Text Search
 ![Alt text](Demo7.png)
 
-# Screen 1 - Beautiful Sketch Visualization
-![Alt text](Demo5.png)
-
 # Screen 2 - Single Image Visualizations
 ![Alt text](Demo1.png)
 
