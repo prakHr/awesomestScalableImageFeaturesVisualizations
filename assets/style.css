@@ -1,0 +1,70 @@
+/* Full-screen Iron Man background */
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: white;
+    font-family: "Segoe UI", sans-serif;
+
+    background:
+        linear-gradient(
+            rgba(5, 8, 22, 0.75),
+            rgba(5, 8, 22, 0.85)
+        ),
+        url("/assets/ironman_bg.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* Glassmorphism container */
+.main-container {
+    margin-top: 30px;
+
+    background: rgba(10, 15, 35, 0.70);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 24px;
+
+    padding: 30px;
+
+    box-shadow:
+        0 0 25px rgba(0, 255, 255, 0.15),
+        0 0 60px rgba(255, 60, 60, 0.12);
+}
+
+/* Title glow */
+.neurova-title {
+    text-align: center;
+    color: #00eaff;
+
+    text-shadow:
+        0 0 10px rgba(0,234,255,0.8),
+        0 0 20px rgba(0,234,255,0.5);
+}
+
+/* Navigation links */
+.nav-link {
+    color: #00eaff;
+    text-decoration: none;
+    font-weight: 600;
+
+    padding: 8px 14px;
+    border-radius: 10px;
+
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: white;
+
+    background: rgba(255, 60, 60, 0.25);
+
+    box-shadow:
+        0 0 15px rgba(255, 60, 60, 0.5);
+
+    transform: translateY(-2px);
+}
