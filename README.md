@@ -1,4 +1,7 @@
-# Special Screen - Beautiful Sketch of a image
+# Special Screen
+![Alt text](UpdatedDemo1.png)
+
+
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/ff0e79cd-e594-4ee3-b796-1389728206ac" />
 
 # Special Screen - Single Source Text Search
